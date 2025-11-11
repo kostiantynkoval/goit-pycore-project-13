@@ -1,6 +1,7 @@
 from colorama import Fore, init
-from bot_modules import AddressBook, Record
 from data_storage import save_data, load_data
+from classes.address_book import AddressBook
+from classes.record import Record
 
 init(autoreset=True)
 
