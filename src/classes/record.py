@@ -1,15 +1,20 @@
 from .phone import Phone
 from .name import Name
 from .birthday import Birthday
+from .address import Address
 
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.addresses = []
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
+
+    def add_address(self, address):
+        self.addresses.append(Address(address))
 
     def add_birthday(self, birthday):
         self.birthday = Birthday(birthday)
@@ -36,4 +41,11 @@ class Record:
 
     def __str__(self):
         birthday_str = self.birthday.value.strftime("%d.%m.%Y") if self.birthday else "N/A"
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}, birthday: {birthday_str}"
+        phones_str = "; ".join(p.value for p in self.phones)
+        address_str = "; ".join(a.value for a in self.addresses) if self.addresses else "N/A"
+        return (
+            f"Contact name: {self.name.value}, "
+            f"phones: {phones_str}, "
+            f"birthday: {birthday_str}, "
+            f"address: {address_str}"
+        )

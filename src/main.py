@@ -66,6 +66,16 @@ def get_contact(args, book: AddressBook):
         raise KeyError
 
 @input_error
+def get_address(args, book: AddressBook):
+    name = args[0]
+    record = book.find(name)
+    if record:
+        address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
+        return f"{Fore.GREEN}Contact name: {name}, address: {address_str}"
+    else:
+        raise KeyError
+
+@input_error
 def get_all_contacts(book: AddressBook):
     if not book:
         return f"{Fore.YELLOW}Address book is empty"
@@ -82,11 +92,23 @@ def add_birthday(args, book:AddressBook):
         raise KeyError
 
 @input_error
-def show_birthday(args, book:AddressBook):
+def add_address(args, book:AddressBook):
+    name = args[0]
+    address = " ".join(args[1:])
+    record = book.find(name)
+    if record:
+        record.add_address(address)
+        return f"{Fore.GREEN}Address added"
+    else:
+        raise KeyError
+
+
+@input_error
+def get_birthday(args, book:AddressBook):
     name = args[0]
     record = book.find(name)
-    if record and record.birthday:
-       return f"{Fore.MAGENTA}Contact name: {name}, birthday: {record.birthday.value.strftime('%d.%m.%Y')}"
+    if record:
+       return f"{Fore.MAGENTA}Contact name: {name}, birthday: {record.birthday.value.strftime('%d.%m.%Y') if record.birthday else 'N/A'}"
     else:
        raise KeyError
 
@@ -114,16 +136,20 @@ def main():
             print(f"{Fore.BLUE}How can I help you?")
         elif command == "add":
             print(add_contact(args, book))
-        elif command == "change":
-            print(update_contact(args, book))
-        elif command == "phone":
-            print(get_contact(args, book))
-        elif command == "all":
-            print(get_all_contacts(book))
         elif command == "add-birthday":
             print(add_birthday(args, book))
+        elif command == "add-address":
+            print(add_address(args, book))
+        elif command == "change-phone":
+            print(update_contact(args, book))
+        elif command == "all":
+            print(get_all_contacts(book))
+        elif command == "show-phone":
+            print(get_contact(args, book))
         elif command == "show-birthday":
-            print(show_birthday(args, book))
+            print(get_birthday(args, book))
+        elif command == "show-address":
+            print(get_address(args, book))
         elif command == "birthdays":
             print(birthdays(book))
         else:
