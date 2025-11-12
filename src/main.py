@@ -61,7 +61,13 @@ def get_contact(args, book: AddressBook):
     name = args[0]
     record = book.find(name)
     if record:
-        return f"{Fore.GREEN}Contact name: {name}, phones: {'; '.join(p.value for p in record.phones)}"
+        phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
+        lines = [
+            f"{Fore.GREEN}Contact name: {record.name.value}",
+            f"Phones: {phones_str}",
+            "-----------------------"
+        ]
+        return "\n".join(lines)
     else:
         raise KeyError
 
@@ -71,7 +77,12 @@ def get_address(args, book: AddressBook):
     record = book.find(name)
     if record:
         address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
-        return f"{Fore.GREEN}Contact name: {name}, address: {address_str}"
+        lines = [
+            f"{Fore.CYAN}Contact name: {record.name.value}",
+            f"Address: {address_str}",
+            "-----------------------"
+        ]
+        return "\n".join(lines)
     else:
         raise KeyError
 
@@ -79,7 +90,19 @@ def get_address(args, book: AddressBook):
 def get_all_contacts(book: AddressBook):
     if not book:
         return f"{Fore.YELLOW}Address book is empty"
-    return "\n".join(f"{Fore.GREEN}{record}" for record in book.data.values())
+    lines = []
+    for record in book.data.values():
+        phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
+        birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
+        address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
+        lines.append(
+            f"{Fore.GREEN}Contact name: {record.name.value}\n"
+            f"Phones: {phones_str}\n"
+            f"Birthday: {birthday_str}\n"
+            f"Address: {address_str}\n"
+            "-----------------------"
+        )
+    return "\n".join(lines)
 
 @input_error
 def add_birthday(args, book:AddressBook):
@@ -108,7 +131,13 @@ def get_birthday(args, book:AddressBook):
     name = args[0]
     record = book.find(name)
     if record:
-       return f"{Fore.MAGENTA}Contact name: {name}, birthday: {record.birthday.value.strftime('%d.%m.%Y') if record.birthday else 'N/A'}"
+        birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
+        lines = [
+            f"{Fore.MAGENTA}Contact name: {record.name.value}",
+            f"Birthday: {birthday_str}",
+            "-----------------------"
+        ]
+        return "\n".join(lines)
     else:
        raise KeyError
 
@@ -119,7 +148,14 @@ def birthdays(book:AddressBook):
     birthdays_list = book.get_upcoming_birthdays()
     if not birthdays_list:
         return f"{Fore.YELLOW}No upcoming birthdays"
-    return "\n".join(f"{Fore.MAGENTA}Contact name: {birthday['name']}, celebration day: {birthday['congratulation_date']}" for birthday in birthdays_list)
+    lines = []
+    for b in birthdays_list:
+        lines.append(
+            f"{Fore.MAGENTA}Contact name: {b['name']}\n"
+            f"Celebration day: {b['congratulation_date']}\n"
+            "-----------------------"
+        )
+    return "\n".join(lines)
 
 def main():
     book = load_data()
