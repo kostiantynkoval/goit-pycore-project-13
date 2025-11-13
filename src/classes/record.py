@@ -47,6 +47,13 @@ class Record:
              phone_number.value = Phone(new_phone).value
              return True
         return False
+    
+    def edit_address(self, addr, new_addr):
+        for ad in self.addresses:
+            if ad.value == addr:
+             ad.value = Address(new_addr).value
+             return True
+        return False
 
     def find_phone(self, phone):
         for phone_number in self.phones:

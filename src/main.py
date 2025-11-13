@@ -126,6 +126,34 @@ def get_address(args, book: AddressBook):
         return "\n".join(lines)
     else:
         raise KeyError
+    
+
+@input_error
+def update_address(args, book: AddressBook):
+    if len(args) < 3:
+        return f"{Fore.RED}Usage: update-address <name> <old_address> -> <old_address>"
+    
+    name=args[0]
+    rest=" ".join(args[1:])
+    try:
+        old_addr, new_addr = rest.split("->")
+        old_addr = old_addr.strip()
+        new_addr = new_addr.strip()
+    except ValueError:
+        return f"{Fore.RED}Please separate old and new addresses with '->'"
+    record = book.find(name)
+
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    if old_addr not in record.addresses:
+        return f"{Fore.RED}Contact {name} has no address {old_addr}"
+    
+    if record.edit_address(old_addr, new_addr):
+        return f"{Fore.GREEN}Address of the contact {name} updated"
+    else:
+        f"{Fore.RED}Contact {name} has no address {old_addr}"
+    
 
 @input_error
 def delete_address(args, book: AddressBook):
@@ -391,6 +419,8 @@ def main():
             print(delete_birthday(args, book))
         elif command == "show-address":
             print(get_address(args, book))
+        elif command == "change-address":
+            print(update_address(args, book))
         elif command == "delete-address":
             print(delete_address(args, book))
         elif command == "birthdays":
