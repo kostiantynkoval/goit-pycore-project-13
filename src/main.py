@@ -1,7 +1,7 @@
 from colorama import Fore, init
 from data_storage import save_data, load_data
 from classes.address_book import AddressBook
-from classes.record import Record
+from classes.record import Record, EmailFieldError
 
 init(autoreset=True)
 
@@ -28,6 +28,8 @@ def input_error(func):
             return f"{Fore.RED}Enter user name"
         except KeyError:
             return f"{Fore.RED}Contact not found"
+        except EmailFieldError as e:
+            return f"{Fore.RED}{e}"
 
     return inner
 
@@ -180,11 +182,16 @@ def get_all_contacts(book: AddressBook):
         phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
         birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
         address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
+        notes_count = f"Notes: {len(record.notes)}\n" if record.notes else ""
+        email_str = f"Email: {record.email.value}\n" if record.email else ""
+
         lines.append(
             f"{Fore.GREEN}Contact name: {record.name.value}\n"
             f"Phones: {phones_str}\n"
             f"Birthday: {birthday_str}\n"
             f"Address: {address_str}\n"
+            f"{notes_count}"
+            f"{email_str}"
             "-----------------------"
         )
     return "\n".join(lines)
@@ -263,14 +270,14 @@ def birthdays(book:AddressBook):
 def add_note(args, book: AddressBook):
     if len(args) < 2:
         return f"{Fore.RED}Usage: add-note <name> <content>"
-    
+
     name = args[0]
     content = " ".join(args[1:])
-    
+
     record = book.find(name)
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
-    
+
     try:
         note = record.add_note(content)
         return f"{Fore.GREEN}Note added successfully! ID: {note.id}"
@@ -281,57 +288,57 @@ def add_note(args, book: AddressBook):
 def show_notes(args, book: AddressBook):
     if len(args) < 1:
         return f"{Fore.RED}Usage: show-notes <name>"
-    
+
     name = args[0]
     record = book.find(name)
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
-    
+
     notes = record.show_all_notes()
     if not notes:
         return f"{Fore.YELLOW}No notes for {name}"
-    
+
     result = [f"{Fore.CYAN}Notes for {name}:"]
     for idx, note in enumerate(notes, 1):
         result.append(f"{Fore.GREEN}[{idx}] {note}")
-    
+
     return "\n".join(result)
 
 @input_error
 def find_notes(args, book: AddressBook):
     if len(args) < 2:
         return f"{Fore.RED}Usage: find-notes <name> <search_text>"
-    
+
     name = args[0]
     search_text = " ".join(args[1:])
-    
+
     record = book.find(name)
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
-    
+
     notes = record.find_notes(search_text)
     if not notes:
         return f"{Fore.YELLOW}No notes found for '{search_text}'"
-    
+
     result = [f"{Fore.CYAN}Found {len(notes)} note(s) for '{search_text}':"]
     for idx, note in enumerate(notes, 1):
         result.append(f"{Fore.GREEN}[{idx}] {note}")
-    
+
     return "\n".join(result)
 
 @input_error
 def edit_note(args, book: AddressBook):
     if len(args) < 3:
         return f"{Fore.RED}Usage: edit-note <name> <note_id> <new_content>"
-    
+
     name = args[0]
     note_id = args[1]
     new_content = " ".join(args[2:])
-    
+
     record = book.find(name)
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
-    
+
     try:
         if record.edit_note(note_id, new_content):
             return f"{Fore.GREEN}Note {note_id} updated successfully"
@@ -344,14 +351,14 @@ def edit_note(args, book: AddressBook):
 def delete_note(args, book: AddressBook):
     if len(args) < 2:
         return f"{Fore.RED}Usage: delete-note <name> <note_id>"
-    
+
     name = args[0]
     note_id = args[1]
-    
+
     record = book.find(name)
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
-    
+
     if record.delete_note(note_id):
         return f"{Fore.GREEN}Note {note_id} deleted successfully"
     else:
@@ -383,6 +390,40 @@ def find(args, book: AddressBook):
         )
     return "\n".join(lines)
 
+
+
+# ****** Start Manipulations with emails ******
+@input_error
+def add_email(args, book:AddressBook):
+    name, email = args
+    record = book.find(name)
+
+    if record:
+        record.add_email(email)
+        return f"{Fore.GREEN}Email is added"
+    else:
+        raise KeyError
+
+@input_error
+def update_email(args, book: AddressBook):
+    name, new_email = args
+    record = book.find(name)
+    if record:
+        record.edit_email(new_email)
+        return f"{Fore.GREEN}Email is updated"
+    else:
+        raise KeyError
+
+@input_error
+def delete_email(args, book: AddressBook):
+    name = args[0]
+    record = book.find(name)
+    if record:
+        record.delete_email()
+        return f"{Fore.GREEN}Email is removed"
+    else:
+        raise KeyError
+# ****** End Manipulations with emails ******
 
 def main():
     book = load_data()
@@ -437,6 +478,12 @@ def main():
             print(delete_note(args, book))
         elif command == "find":
             print(find(args, book))
+        elif command == "add-email":
+            print(add_email(args, book))
+        elif command == "change-email":
+            print(update_email(args, book))
+        elif command == "delete-email":
+            print(delete_email(args, book))
         else:
             print(f"{Fore.RED}Invalid command")
 

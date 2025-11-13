@@ -3,6 +3,11 @@ from .name import Name
 from .birthday import Birthday
 from .note import Note
 from .address import Address
+from .email import Email
+# from src.exeptions.email_already_exists import EmailAlreadyExistsError
+
+class EmailFieldError(Exception):
+    pass
 
 class Record:
     def __init__(self, name):
@@ -11,6 +16,7 @@ class Record:
         self.birthday = None
         self.notes = []
         self.addresses = []
+        self.email = None
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -61,34 +67,55 @@ class Record:
              return phone_number
         return None
 
+    def add_email(self, email):
+        if not self.email:
+            self.email = Email(email)
+            return True
+        else:
+            raise EmailFieldError("There is already an email for this contact. Please use change-email command to update it.")
+
+    def edit_email(self, new_email):
+        if self.email:
+            self.email = Email(new_email)
+            return True
+        else:
+            raise EmailFieldError("There is no email for this contact. Please use add-email command to add one.")
+
+    def delete_email(self):
+        if self.email:
+            self.email = None
+            return True
+        else:
+            raise EmailFieldError("There is no email for this contact. Please use add-email command to add one.")
+
     def add_note(self, content: str):
         note = Note(content)
         self.notes.append(note)
         return note
-    
+
     def find_note_by_id(self, note_id: str):
         for note in self.notes:
             if note.id == note_id:
                 return note
         return None
-    
+
     def find_notes(self, search_text: str):
         return [note for note in self.notes if note.matches_search(search_text)]
-    
+
     def edit_note(self, note_id: str, new_content: str):
         note = self.find_note_by_id(note_id)
         if note:
             note.edit(new_content)
             return True
         return False
-    
+
     def delete_note(self, note_id: str):
         note = self.find_note_by_id(note_id)
         if note:
             self.notes.remove(note)
             return True
         return False
-    
+
     def show_all_notes(self):
         return self.notes
 
@@ -97,10 +124,12 @@ class Record:
         notes_count = f", notes: {len(self.notes)}" if self.notes else ""
         phones_str = "; ".join(p.value for p in self.phones)
         address_str = "; ".join(a.value for a in self.addresses) if self.addresses else "N/A"
+        email_str = f", email: {self.email.value}" if self.email else ""
         return (
             f"Contact name: {self.name.value}, "
             f"phones: {phones_str}, "
             f"birthday: {birthday_str}, "
             f"address: {address_str}"
             f"{notes_count}"
+            f"{email_str}"
         )
