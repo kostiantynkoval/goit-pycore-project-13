@@ -22,7 +22,7 @@ def input_error(func):
         except ValueError as e:
             msg = str(e)
             if "unpack" in msg or "not enough values" in msg:
-                return f"{Fore.RED}Give me name and phone please"
+                return f"{Fore.RED}Enter name and phone please"
             return f"{Fore.RED}{msg}"
         except IndexError:
             return f"{Fore.RED}Enter user name"
@@ -33,7 +33,7 @@ def input_error(func):
 
     return inner
 
-
+# ****** Start Manipulations with contact ******
 @input_error
 def add_contact(args, book: AddressBook):
     name, phone = args
@@ -66,8 +66,62 @@ def delete_contact(args, book: AddressBook):
         return f"{Fore.GREEN}Contact {name} deleted successfully"
     else:
         return f"{Fore.RED}Contact '{name}' not found"
+    
+    
+@input_error
+def find(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: find <field> <string>"
+    
+    field = args[0]
+    string = args[1]
+    lines=[]
+    records = book.find_by_any_arg(field, string)
+
+    if len(records) == 0:
+        return f"{Fore.RED}Contacts with the field {field} that contain {string} not found."
+    else:
+        for r in records:
+            phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
+            birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
+            address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
+            email_str=r.email.value if r.email else "N/A"
+            lines.append(
+            f"{Fore.GREEN}Contact name: {r.name.value}\n"
+            f"Phones: {phones_str}\n"
+            f"Birthday: {birthday_str}\n"
+            f"Address: {address_str}\n"
+            f"Email: {email_str}\n"
+            "-----------------------"
+        )
+    return "\n".join(lines)
+
+@input_error
+def get_all_contacts(book: AddressBook):
+    if not book:
+        return f"{Fore.YELLOW}Address book is empty"
+    lines = []
+    for record in book.data.values():
+        phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
+        birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
+        address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
+        notes_count = f"Notes: {len(record.notes)}\n" if record.notes else ""
+        email_str = f"Email: {record.email.value}\n" if record.email else ""
+
+        lines.append(
+            f"{Fore.GREEN}Contact name: {record.name.value}\n"
+            f"Phones: {phones_str}\n"
+            f"Birthday: {birthday_str}\n"
+            f"Address: {address_str}\n"
+            f"{notes_count}"
+            f"{email_str}"
+            "-----------------------"
+        )
+    return "\n".join(lines)
+# ****** End Manipulations with contact ******
 
 
+# ****** Start Manipulations with phone ******
 @input_error
 def update_contact(args, book: AddressBook):
     name, old_phone, new_phone = args
@@ -92,7 +146,7 @@ def get_contact(args, book: AddressBook):
         return "\n".join(lines)
     else:
         raise KeyError
-    
+
 @input_error
 def delete_phone(args, book: AddressBook):
     if len(args) < 2:
@@ -111,8 +165,20 @@ def delete_phone(args, book: AddressBook):
         return f"{Fore.GREEN}Phone number {phone} of contact {name} deleted successfully"
     else:
         return f"{Fore.RED}Phone number '{phone}' not found"
+# ****** End Manipulations with phone ******
 
-  
+
+# ****** Start Manipulations with address ******
+@input_error
+def add_address(args, book:AddressBook):
+    name = args[0]
+    address = " ".join(args[1:])
+    record = book.find(name)
+    if record:
+        record.add_address(address)
+        return f"{Fore.GREEN}Address added"
+    else:
+        raise KeyError  
 
 @input_error
 def get_address(args, book: AddressBook):
@@ -133,14 +199,14 @@ def get_address(args, book: AddressBook):
 @input_error
 def update_address(args, book: AddressBook):
     if len(args) < 3:
-        return f"{Fore.RED}Usage: update-address <name> <old_address> -> <old_address>"
+        return f"{Fore.RED}Usage: update-address <name> <old_address> -> <new_address>"
     
     name=args[0]
     rest=" ".join(args[1:])
     try:
         old_addr, new_addr = rest.split("->")
-        old_addr = old_addr.strip()
-        new_addr = new_addr.strip()
+        old_addr = old_addr.strip().replace("\r", "")
+        new_addr = new_addr.strip().replace("\r", "")
     except ValueError:
         return f"{Fore.RED}Please separate old and new addresses with '->'"
     record = book.find(name)
@@ -148,8 +214,8 @@ def update_address(args, book: AddressBook):
     if not record:
         return f"{Fore.RED}Contact '{name}' not found"
     
-    if old_addr not in record.addresses:
-        return f"{Fore.RED}Contact {name} has no address {old_addr}"
+    if old_addr.lower() not in [a.value.lower() for a in record.addresses]:
+        return f"{Fore.RED}Contact {name} has no address {old_addr}!!!"
     
     if record.edit_address(old_addr, new_addr):
         return f"{Fore.GREEN}Address of the contact {name} updated"
@@ -172,30 +238,10 @@ def delete_address(args, book: AddressBook):
         return f"{Fore.GREEN}Address {address} of contact {name} deleted successfully"
     else:
         return f"{Fore.RED}Address '{address}' not found"
+# ****** End Manipulations with address ******
 
-@input_error
-def get_all_contacts(book: AddressBook):
-    if not book:
-        return f"{Fore.YELLOW}Address book is empty"
-    lines = []
-    for record in book.data.values():
-        phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
-        birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
-        address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
-        notes_count = f"Notes: {len(record.notes)}\n" if record.notes else ""
-        email_str = f"Email: {record.email.value}\n" if record.email else ""
 
-        lines.append(
-            f"{Fore.GREEN}Contact name: {record.name.value}\n"
-            f"Phones: {phones_str}\n"
-            f"Birthday: {birthday_str}\n"
-            f"Address: {address_str}\n"
-            f"{notes_count}"
-            f"{email_str}"
-            "-----------------------"
-        )
-    return "\n".join(lines)
-
+# ****** Start Manipulations with birthday ******
 @input_error
 def add_birthday(args, book:AddressBook):
     name, birthday = args
@@ -205,18 +251,6 @@ def add_birthday(args, book:AddressBook):
         return f"{Fore.GREEN}Birthday added"
     else:
         raise KeyError
-
-@input_error
-def add_address(args, book:AddressBook):
-    name = args[0]
-    address = " ".join(args[1:])
-    record = book.find(name)
-    if record:
-        record.add_address(address)
-        return f"{Fore.GREEN}Address added"
-    else:
-        raise KeyError
-
 
 @input_error
 def get_birthday(args, book:AddressBook):
@@ -232,7 +266,15 @@ def get_birthday(args, book:AddressBook):
         return "\n".join(lines)
     else:
        raise KeyError
-    
+
+@input_error
+def update_birthday(args, book: AddressBook):
+    name, new_bday = args
+    record = book.find(name)
+    if record and record.edit_birthday(new_bday):
+            return f"{Fore.GREEN}Birthday is updated"
+    else:
+        raise KeyError
 
 @input_error
 def delete_birthday(args, book: AddressBook):
@@ -249,7 +291,6 @@ def delete_birthday(args, book: AddressBook):
     else:
         return f"{Fore.RED}Contact '{name}' has no birthday date"
 
-
 @input_error
 def birthdays(book:AddressBook):
     if not book:
@@ -265,7 +306,9 @@ def birthdays(book:AddressBook):
             "-----------------------"
         )
     return "\n".join(lines)
+# ****** End Manipulations with birthday ******
 
+# ****** Start Manipulations with notes ******
 @input_error
 def add_note(args, book: AddressBook):
     if len(args) < 2:
@@ -363,34 +406,7 @@ def delete_note(args, book: AddressBook):
         return f"{Fore.GREEN}Note {note_id} deleted successfully"
     else:
         return f"{Fore.RED}Note with ID '{note_id}' not found"
-    
-@input_error
-def find(args, book: AddressBook):
-    if len(args) < 2:
-        return f"{Fore.RED}Usage: find <field> <string>"
-    
-    field = args[0]
-    string = args[1]
-    lines=[]
-    records = book.find_by_any_arg(field, string)
-
-    if len(records) == 0:
-        return f"{Fore.RED}Contacts with the field {field} that contain {string} not found."
-    else:
-        for r in records:
-            phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
-            birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
-            address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
-            lines.append(
-            f"{Fore.GREEN}Contact name: {r.name.value}\n"
-            f"Phones: {phones_str}\n"
-            f"Birthday: {birthday_str}\n"
-            f"Address: {address_str}\n"
-            "-----------------------"
-        )
-    return "\n".join(lines)
-
-
+# ****** End Manipulations with notes ******
 
 # ****** Start Manipulations with emails ******
 @input_error
@@ -413,6 +429,19 @@ def update_email(args, book: AddressBook):
         return f"{Fore.GREEN}Email is updated"
     else:
         raise KeyError
+    
+def show_email(args, book:AddressBook):
+    name = args[0]
+    record = book.find(name)
+    if record:
+        lines = [
+            f"{Fore.MAGENTA}Contact name: {record.name.value}",
+            f"Email: {record.email.value if record.email else "N/A"}",
+            "-----------------------"
+        ]
+        return "\n".join(lines)
+    else:
+       raise KeyError
 
 @input_error
 def delete_email(args, book: AddressBook):
@@ -424,6 +453,35 @@ def delete_email(args, book: AddressBook):
     else:
         raise KeyError
 # ****** End Manipulations with emails ******
+
+def help():
+    return (
+        f"{Fore.CYAN}Available Commands:\n"
+        f"{Fore.YELLOW}add <name> <phone> {Fore.RESET}- Add a new contact\n"
+        f"{Fore.YELLOW}delete <name> {Fore.RESET}- Delete contact from the book\n"
+        f"{Fore.YELLOW}add-birthday <name> <birthday> {Fore.RESET}- Add birthday for a contact\n"
+        f"{Fore.YELLOW}add-address <name> <address> {Fore.RESET}- Add address for a contact\n"
+        f"{Fore.YELLOW}add-email <name> <email> {Fore.RESET}- Add email for a contact\n"
+        f"{Fore.YELLOW}add-note <name> <note> {Fore.RESET}- Add note for a contact\n"
+        f"{Fore.YELLOW}all {Fore.RESET}- Shows all contacts in the book\n"
+        f"{Fore.YELLOW}change-phone <name> <old_phone> <new_phone> {Fore.RESET}- Change a phone number of contact\n"
+        f"{Fore.YELLOW}change-birthday <name> <birthday> {Fore.RESET}- Change birthday of contact\n"
+        f"{Fore.YELLOW}change-address <name> <old_address> -> <new_address> {Fore.RESET}- Change address of contact\n"
+        f"{Fore.YELLOW}change-email <name> <email> {Fore.RESET}- Change email of contact\n"
+        f"{Fore.YELLOW}show-phone <name> {Fore.RESET}- Show phones of contact\n"
+        f"{Fore.YELLOW}show-birthday <name> {Fore.RESET}- Show birthday of contact\n"
+        f"{Fore.YELLOW}show-address <name> {Fore.RESET}- Show address of contact\n"
+        f"{Fore.YELLOW}show-email <name> {Fore.RESET}- Show email of contact\n"
+        f"{Fore.YELLOW}show-note <name> {Fore.RESET}- Show notes of contact\n"
+        f"{Fore.YELLOW}find-note <name> <search_text> {Fore.RESET}- Show note with specific text of contact\n"
+        f"{Fore.YELLOW}find <field> <string> {Fore.RESET}- Search contacts by specific fields\n"
+        f"{Fore.YELLOW}delete-phone <name> <phone> {Fore.RESET}- Delete phone number of contact\n"
+        f"{Fore.YELLOW}delete-birthday <name> {Fore.RESET}- Delete birthday of contact\n"
+        f"{Fore.YELLOW}delete-address <name> <address> {Fore.RESET}- Delete address of contact\n"
+        f"{Fore.YELLOW}delete-note <name> <note_ID> {Fore.RESET}- Delete note with specific ID of contact\n"
+        f"{Fore.YELLOW}delete-email <name> {Fore.RESET}- Delete email of contact\n"
+        f"{Fore.YELLOW}birthdays {Fore.RESET}- Show contacts with birthdays for the next week\n"
+    )
 
 def main():
     book = load_data()
@@ -456,6 +514,8 @@ def main():
             print(delete_phone(args, book))
         elif command == "show-birthday":
             print(get_birthday(args, book))
+        elif command == "change-birthday":
+            print(update_birthday(args, book))
         elif command == "delete-birthday":
             print(delete_birthday(args, book))
         elif command == "show-address":
@@ -482,8 +542,12 @@ def main():
             print(add_email(args, book))
         elif command == "change-email":
             print(update_email(args, book))
+        elif command == "show-email":
+            print(show_email(args, book))
         elif command == "delete-email":
             print(delete_email(args, book))
+        elif command == "help":
+            print(help())
         else:
             print(f"{Fore.RED}Invalid command")
 

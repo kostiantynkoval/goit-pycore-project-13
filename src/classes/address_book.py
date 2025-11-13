@@ -65,6 +65,9 @@ class AddressBook(UserDict):
                 case "birthday":
                     if record.birthday and string in record.birthday.value.strftime("%d.%m.%Y"):
                         result.append(record)
+                case "email":
+                    if record.email and string in record.email.value:
+                        result.append(record)
                 case _:
                     raise ValueError(f"Unknown field: {field}. Expected fields to search are: name, phone, birthday, address.")
         return result

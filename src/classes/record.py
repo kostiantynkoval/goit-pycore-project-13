@@ -56,10 +56,17 @@ class Record:
     
     def edit_address(self, addr, new_addr):
         for ad in self.addresses:
-            if ad.value == addr:
+            if ad.value.lower() == addr.lower():
              ad.value = Address(new_addr).value
              return True
         return False
+    
+    def edit_birthday(self, bday):
+        if self.birthday:
+            self.birthday = Birthday(bday)
+            return True
+        else:
+            return False
 
     def find_phone(self, phone):
         for phone_number in self.phones:
