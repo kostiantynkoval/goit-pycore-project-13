@@ -27,6 +27,19 @@ class Record:
             self.phones.remove(phone_number)
             return True
         return False
+    
+    def remove_address(self, address):
+        for addr in self.addresses:
+         if addr.value.lower() == address.lower():
+            self.addresses.remove(addr)
+            return True
+        return False
+    
+    def remove_birthday(self, name):
+        if self.name and self.birthday:
+            self.birthday=None
+            return True
+        return False
 
     def edit_phone(self, phone, new_phone):
         for phone_number in self.phones:

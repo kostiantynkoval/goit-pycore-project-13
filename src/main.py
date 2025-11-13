@@ -47,6 +47,26 @@ def add_contact(args, book: AddressBook):
 
 
 @input_error
+def delete_contact(args, book: AddressBook):
+    if len(args) < 1:
+        return f"{Fore.RED}Usage: delete <name>"
+    
+    name = args[0]
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    confirmation=input(f"{Fore.YELLOW}Are you sure? You are going to delete the entire contact '{name}'? (yes/no):")
+    if confirmation.strip().lower()!="yes":
+        return f"{Fore.CYAN} Deletion cancelled."
+    
+    if book.delete(name):
+        return f"{Fore.GREEN}Contact {name} deleted successfully"
+    else:
+        return f"{Fore.RED}Contact '{name}' not found"
+
+
+@input_error
 def update_contact(args, book: AddressBook):
     name, old_phone, new_phone = args
     record = book.find(name)
@@ -70,6 +90,27 @@ def get_contact(args, book: AddressBook):
         return "\n".join(lines)
     else:
         raise KeyError
+    
+@input_error
+def delete_phone(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: delete-phone <name> <phone>"
+
+    name = args[0]
+    phone=args[1]
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    if len(record.phones) <=1:
+        return f"{Fore.RED}Contact must have at least one phone number."
+    
+    if record.remove_phone(phone):
+        return f"{Fore.GREEN}Phone number {phone} of contact {name} deleted successfully"
+    else:
+        return f"{Fore.RED}Phone number '{phone}' not found"
+
+  
 
 @input_error
 def get_address(args, book: AddressBook):
@@ -85,6 +126,22 @@ def get_address(args, book: AddressBook):
         return "\n".join(lines)
     else:
         raise KeyError
+
+@input_error
+def delete_address(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: delete-address <name> <address>"
+    
+    name = args[0]
+    address=" ".join(args[1:])
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    if record.remove_address(address):
+        return f"{Fore.GREEN}Address {address} of contact {name} deleted successfully"
+    else:
+        return f"{Fore.RED}Address '{address}' not found"
 
 @input_error
 def get_all_contacts(book: AddressBook):
@@ -140,6 +197,23 @@ def get_birthday(args, book:AddressBook):
         return "\n".join(lines)
     else:
        raise KeyError
+    
+
+@input_error
+def delete_birthday(args, book: AddressBook):
+    if len(args) < 1:
+        return f"{Fore.RED}Usage: delete-birthday <name>"
+    
+    name = args[0]
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    if record.remove_birthday(name):
+        return f"{Fore.GREEN}Birthday of contact {name} deleted successfully"
+    else:
+        return f"{Fore.RED}Contact '{name}' has no birthday date"
+
 
 @input_error
 def birthdays(book:AddressBook):
@@ -297,6 +371,8 @@ def main():
             print(f"{Fore.BLUE}How can I help you?")
         elif command == "add":
             print(add_contact(args, book))
+        elif command == "delete":
+            print(delete_contact(args, book))
         elif command == "add-birthday":
             print(add_birthday(args, book))
         elif command == "add-address":
@@ -307,10 +383,16 @@ def main():
             print(get_all_contacts(book))
         elif command == "show-phone":
             print(get_contact(args, book))
+        elif command == "delete-phone":
+            print(delete_phone(args, book))
         elif command == "show-birthday":
             print(get_birthday(args, book))
+        elif command == "delete-birthday":
+            print(delete_birthday(args, book))
         elif command == "show-address":
             print(get_address(args, book))
+        elif command == "delete-address":
+            print(delete_address(args, book))
         elif command == "birthdays":
             print(birthdays(book))
         elif command == "add-note":
