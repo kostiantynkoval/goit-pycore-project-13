@@ -254,6 +254,33 @@ def delete_note(args, book: AddressBook):
         return f"{Fore.GREEN}Note {note_id} deleted successfully"
     else:
         return f"{Fore.RED}Note with ID '{note_id}' not found"
+    
+@input_error
+def find(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: find <field> <string>"
+    
+    field = args[0]
+    string = args[1]
+    lines=[]
+    records = book.find_by_any_arg(field, string)
+
+    if len(records) == 0:
+        return f"{Fore.RED}Contacts with the field {field} that contain {string} not found."
+    else:
+        for r in records:
+            phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
+            birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
+            address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
+            lines.append(
+            f"{Fore.GREEN}Contact name: {r.name.value}\n"
+            f"Phones: {phones_str}\n"
+            f"Birthday: {birthday_str}\n"
+            f"Address: {address_str}\n"
+            "-----------------------"
+        )
+    return "\n".join(lines)
+
 
 def main():
     book = load_data()
@@ -296,6 +323,8 @@ def main():
             print(edit_note(args, book))
         elif command == "delete-note":
             print(delete_note(args, book))
+        elif command == "find":
+            print(find(args, book))
         else:
             print(f"{Fore.RED}Invalid command")
 
