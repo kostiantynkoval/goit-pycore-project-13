@@ -46,3 +46,28 @@ class AddressBook(UserDict):
                      })
 
         return birthdays_list
+    
+    def find_by_any_arg(self, field: str, string: str) -> list[Record]:
+        field=field.lower()
+        string=string.lower()
+        result: list[Record] = []
+        for key, record in self.data.items():
+            match field:
+                case "name":
+                    if string in key.lower():
+                        result.append(record)
+                case "phone":
+                    if any(string in p.value for p in record.phones):
+                        result.append(record)
+                case "address":
+                    if record.addresses and any(string in p.value.lower() for p in record.addresses):
+                        result.append(record)
+                case "birthday":
+                    if record.birthday and string in record.birthday.value.strftime("%d.%m.%Y"):
+                        result.append(record)
+                case "email":
+                    if record.email and string in record.email.value:
+                        result.append(record)
+                case _:
+                    raise ValueError(f"Unknown field: {field}. Expected fields to search are: name, phone, birthday, address.")
+        return result
