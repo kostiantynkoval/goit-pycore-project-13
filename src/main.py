@@ -126,16 +126,16 @@ def get_all_contacts(book: AddressBook):
         phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
         birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
         address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
-        notes_count = f"Notes: {len(record.notes)}\n" if record.notes else ""
-        email_str = f"Email: {record.email.value}\n" if record.email else ""
+        email_str = f"{record.email.value}\n" if record.email else "N/A"
+        notes_count = f"{len(record.notes)}\n" if record.notes else "N/A"
 
         lines.append(
             f"{Fore.GREEN}Contact name: {record.name.value}\n"
             f"Phones: {phones_str}\n"
             f"Birthday: {birthday_str}\n"
             f"Address: {address_str}\n"
-            f"{notes_count}"
-            f"{email_str}"
+            f"Email: {email_str}\n"
+            f"Notes: {notes_count}\n"
             "-----------------------"
         )
     return "\n".join(lines)
@@ -355,6 +355,27 @@ def birthdays(book:AddressBook):
             "-----------------------"
         )
     return "\n".join(lines)
+
+@input_error
+def birthdays_in_range(args, book: AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Provide a range of birthdays")
+    try:
+        days = int(args[0])
+    except ValueError:
+        raise ValueError("Days must be an integer number")
+    birthdays_list = book.get_birthdays_in_range(days)
+    if not birthdays_list:
+        return f"{Fore.YELLOW}No birthdays in the next {days} days"
+    lines = []
+    for b in birthdays_list:
+        lines.append(
+            f"{Fore.MAGENTA}Contact: {b['name']}\n"
+            f"Birthday: {b['birthday']}\n"
+            "-----------------------"
+        )
+    return "\n".join(lines)
+
 # ****** End Manipulations with birthday ******
 
 # ****** Start Manipulations with notes ******
@@ -623,15 +644,15 @@ def help():
         f"{Fore.YELLOW}show-birthday <name> {Fore.RESET}- Show birthday of contact\n"
         f"{Fore.YELLOW}show-address <name> {Fore.RESET}- Show address of contact\n"
         f"{Fore.YELLOW}show-email <name> {Fore.RESET}- Show email of contact\n"
-        f"{Fore.YELLOW}show-note <name> {Fore.RESET}- Show notes of contact\n"
-        f"{Fore.YELLOW}find-note <name> <search_text> {Fore.RESET}- Show note with specific text of contact\n"
+        f"{Fore.YELLOW}show-notes <name> {Fore.RESET}- Show notes of contact\n"
+        f"{Fore.YELLOW}show-celebration-day {Fore.RESET}- Show contacts with birthdays for the next week\n"
+        f"{Fore.YELLOW}find-notes <name> <search_text> {Fore.RESET}- Show note with specific text of contact\n"
         f"{Fore.YELLOW}find <field> <string> {Fore.RESET}- Search contacts by specific fields\n"
         f"{Fore.YELLOW}delete-phone <name> <phone> {Fore.RESET}- Delete phone number of contact\n"
         f"{Fore.YELLOW}delete-birthday <name> {Fore.RESET}- Delete birthday of contact\n"
         f"{Fore.YELLOW}delete-address <name> <address> {Fore.RESET}- Delete address of contact\n"
         f"{Fore.YELLOW}delete-note <name> <note_ID> {Fore.RESET}- Delete note with specific ID of contact\n"
         f"{Fore.YELLOW}delete-email <name> {Fore.RESET}- Delete email of contact\n"
-        f"{Fore.YELLOW}birthdays {Fore.RESET}- Show contacts with birthdays for the next week\n"
     )
 
 def main():
@@ -649,64 +670,66 @@ def main():
             print(f"{Fore.BLUE}How can I help you?")
         elif command == "add":
             print(add_contact(args, book))
-        elif command == "delete":
-            print(delete_contact(args, book))
         elif command == "add-birthday":
             print(add_birthday(args, book))
         elif command == "add-address":
             print(add_address(args, book))
+        elif command == "add-email":
+            print(add_email(args, book))
+        elif command == "add-note":
+            print(add_note(args, book))
+        elif command == "add-tag":
+            print(add_tag(args, book))
         elif command == "change-phone":
             print(update_contact(args, book))
+        elif command == "change-birthday":
+            print(update_birthday(args, book))
+        elif command == "change-address":
+            print(update_address(args, book))
+        elif command == "change-email":
+            print(update_email(args, book))
+        elif command == "delete":
+            print(delete_contact(args, book))
+        elif command == "delete-phone":
+            print(delete_phone(args, book))
+        elif command == "delete-birthday":
+            print(delete_birthday(args, book))
+        elif command == "delete-address":
+            print(delete_address(args, book))
+        elif command == "delete-email":
+            print(delete_email(args, book))
+        elif command == "delete-note":
+            print(delete_note(args, book))
         elif command == "all":
             print(get_all_contacts(book))
         elif command == "show-phone":
             print(get_contact(args, book))
-        elif command == "delete-phone":
-            print(delete_phone(args, book))
         elif command == "show-birthday":
             print(get_birthday(args, book))
-        elif command == "change-birthday":
-            print(update_birthday(args, book))
-        elif command == "delete-birthday":
-            print(delete_birthday(args, book))
+        elif command == "show-birthdays-in":
+            print(birthdays_in_range(args, book))
+        elif command == "show-celebration-day":
+            print(birthdays(book))
         elif command == "show-address":
             print(get_address(args, book))
-        elif command == "change-address":
-            print(update_address(args, book))
-        elif command == "delete-address":
-            print(delete_address(args, book))
-        elif command == "birthdays":
-            print(birthdays(book))
-        elif command == "add-note":
-            print(add_note(args, book))
         elif command == "show-notes":
             print(show_notes(args, book))
-        elif command == "find-notes":
-            print(find_notes(args, book))
+        elif command == "show-notes-sorted":
+            print(show_notes_sorted(args, book))
+        elif command == "show-email":
+            print(show_email(args, book))
         elif command == "edit-note":
             print(edit_note(args, book))
-        elif command == "delete-note":
-            print(delete_note(args, book))
-        elif command == "add-tag":
-            print(add_tag(args, book))
         elif command == "remove-tag":
             print(remove_tag(args, book))
+        elif command == "find":
+            print(find(args, book))
         elif command == "find-by-tag":
             print(find_by_tag(args, book))
         elif command == "find-all-by-tag":
             print(find_all_by_tag(args, book))
-        elif command == "show-notes-sorted":
-            print(show_notes_sorted(args, book))
-        elif command == "find":
-            print(find(args, book))
-        elif command == "add-email":
-            print(add_email(args, book))
-        elif command == "change-email":
-            print(update_email(args, book))
-        elif command == "show-email":
-            print(show_email(args, book))
-        elif command == "delete-email":
-            print(delete_email(args, book))
+        elif command == "find-notes":
+            print(find_notes(args, book))
         elif command == "help":
             print(help())
         else:
