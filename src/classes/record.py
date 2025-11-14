@@ -125,6 +125,22 @@ class Record:
 
     def show_all_notes(self):
         return self.notes
+    
+    def add_tag_to_note(self, note_id: str, tag: str):
+        note = self.find_note_by_id(note_id)
+        if note:
+            note.add_tag(tag)
+            return True
+        return False
+    
+    def remove_tag_from_note(self, note_id: str, tag: str):
+        note = self.find_note_by_id(note_id)
+        if note:
+            return note.remove_tag(tag)
+        return False
+    
+    def find_notes_by_tag(self, tag: str):
+        return [note for note in self.notes if note.has_tag(tag)]
 
     def __str__(self):
         birthday_str = self.birthday.value.strftime("%d.%m.%Y") if self.birthday else "N/A"

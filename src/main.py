@@ -406,6 +406,105 @@ def delete_note(args, book: AddressBook):
         return f"{Fore.GREEN}Note {note_id} deleted successfully"
     else:
         return f"{Fore.RED}Note with ID '{note_id}' not found"
+
+@input_error
+def add_tag(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: add-tag <note_id> <tag>"
+    
+    note_id = args[0]
+    tag = args[1]
+    
+    record, note = book.find_note_by_id(note_id)
+    if not note:
+        return f"{Fore.RED}Note with ID '{note_id}' not found"
+    
+    try:
+        note.add_tag(tag)
+        return f"{Fore.GREEN}Tag '{tag}' added to note {note_id}"
+    except ValueError as e:
+        return f"{Fore.RED}{str(e)}"
+
+@input_error
+def remove_tag(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: remove-tag <note_id> <tag>"
+    
+    note_id = args[0]
+    tag = args[1]
+    
+    record, note = book.find_note_by_id(note_id)
+    if not note:
+        return f"{Fore.RED}Note with ID '{note_id}' not found"
+    
+    if note.remove_tag(tag):
+        return f"{Fore.GREEN}Tag '{tag}' removed from note {note_id}"
+    else:
+        return f"{Fore.RED}Tag '{tag}' not found in note {note_id}"
+
+@input_error
+def find_by_tag(args, book: AddressBook):
+    if len(args) < 2:
+        return f"{Fore.RED}Usage: find-by-tag <name> <tag>"
+    
+    name = args[0]
+    tag = args[1]
+    
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    notes = record.find_notes_by_tag(tag)
+    if not notes:
+        return f"{Fore.YELLOW}No notes found with tag '{tag}'"
+    
+    result = [f"{Fore.CYAN}Notes for {name} with tag '#{tag}':"]
+    for idx, note in enumerate(notes, 1):
+        result.append(f"{Fore.GREEN}[{idx}] {note}")
+    
+    return "\n".join(result)
+
+@input_error
+def find_all_by_tag(args, book: AddressBook):
+    if len(args) < 1:
+        return f"{Fore.RED}Usage: find-all-by-tag <tag>"
+    
+    tag = args[0]
+    results = book.find_all_notes_by_tag(tag)
+    
+    if not results:
+        return f"{Fore.YELLOW}No notes found with tag '{tag}'"
+    
+    output = [f"{Fore.CYAN}All notes with tag '#{tag}':"]
+    for result in results:
+        output.append(f"\n{Fore.MAGENTA}Contact: {result['contact']}")
+        for idx, note in enumerate(result['notes'], 1):
+            output.append(f"{Fore.GREEN}[{idx}] {note}")
+    
+    return "\n".join(output)
+
+@input_error
+def show_notes_sorted(args, book: AddressBook):
+    if len(args) < 1:
+        return f"{Fore.RED}Usage: show-notes-sorted <name>"
+    
+    name = args[0]
+    record = book.find(name)
+    if not record:
+        return f"{Fore.RED}Contact '{name}' not found"
+    
+    notes = record.show_all_notes()
+    if not notes:
+        return f"{Fore.YELLOW}No notes for {name}"
+    
+    sorted_notes = sorted(notes, key=lambda n: len(n.tags), reverse=True)
+    
+    result = [f"{Fore.CYAN}Notes for {name} (sorted by tags count):"]
+    for idx, note in enumerate(sorted_notes, 1):
+        result.append(f"{Fore.GREEN}[{idx}] {note}")
+    
+    return "\n".join(result)
+
 # ****** End Manipulations with notes ******
 
 # ****** Start Manipulations with emails ******
@@ -536,6 +635,16 @@ def main():
             print(edit_note(args, book))
         elif command == "delete-note":
             print(delete_note(args, book))
+        elif command == "add-tag":
+            print(add_tag(args, book))
+        elif command == "remove-tag":
+            print(remove_tag(args, book))
+        elif command == "find-by-tag":
+            print(find_by_tag(args, book))
+        elif command == "find-all-by-tag":
+            print(find_all_by_tag(args, book))
+        elif command == "show-notes-sorted":
+            print(show_notes_sorted(args, book))
         elif command == "find":
             print(find(args, book))
         elif command == "add-email":

@@ -47,6 +47,24 @@ class AddressBook(UserDict):
 
         return birthdays_list
     
+    def find_all_notes_by_tag(self, tag: str):
+        results = []
+        for record in self.data.values():
+            notes = record.find_notes_by_tag(tag)
+            if notes:
+                results.append({
+                    'contact': record.name.value,
+                    'notes': notes
+                })
+        return results
+    
+    def find_note_by_id(self, note_id: str):
+        for record in self.data.values():
+            note = record.find_note_by_id(note_id)
+            if note:
+                return record, note
+        return None, None
+        
     def find_by_any_arg(self, field: str, string: str) -> list[Record]:
         field=field.lower()
         string=string.lower()
