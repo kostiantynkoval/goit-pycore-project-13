@@ -2,6 +2,15 @@ from colorama import Fore, init
 from data_storage import save_data, load_data
 from classes.address_book import AddressBook
 from classes.record import Record, EmailFieldError
+from exceptions import (
+    ContactNotFoundError,
+    PhoneNotFoundError,
+    AddressNotFoundError,
+    BirthdayNotFoundError,
+    NoteNotFoundError,
+    InsufficientArgumentsError,
+    MinimumPhoneRequiredError,
+)
 
 init(autoreset=True)
 
@@ -19,23 +28,35 @@ def input_error(func):
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ValueError as e:
-            msg = str(e)
-            if "unpack" in msg or "not enough values" in msg:
-                return f"{Fore.RED}Enter name and phone please"
-            return f"{Fore.RED}{msg}"
-        except IndexError:
-            return f"{Fore.RED}Enter user name"
-        except KeyError:
-            return f"{Fore.RED}Contact not found"
+        except ContactNotFoundError as e:
+            return f"{Fore.RED}{str(e) if str(e) else 'Contact not found'}"
+        except PhoneNotFoundError as e:
+            return f"{Fore.RED}{str(e) if str(e) else 'Phone number not found'}"
+        except AddressNotFoundError as e:
+            return f"{Fore.RED}{str(e) if str(e) else 'Address not found'}"
+        except BirthdayNotFoundError as e:
+            return f"{Fore.RED}{str(e) if str(e) else 'Birthday not found'}"
+        except NoteNotFoundError as e:
+            return f"{Fore.RED}{str(e) if str(e) else 'Note not found'}"
+        except InsufficientArgumentsError as e:
+            return f"{Fore.RED}{str(e)}"
+        except MinimumPhoneRequiredError as e:
+            return f"{Fore.RED}{str(e)}"
         except EmailFieldError as e:
-            return f"{Fore.RED}{e}"
+            return f"{Fore.RED}{str(e)}"
+        except ValueError as e:
+            return f"{Fore.RED}{str(e)}"
+        except (IndexError, KeyError) as e:
+            return f"{Fore.RED}Invalid arguments provided"
 
     return inner
 
 # ****** Start Manipulations with contact ******
 @input_error
 def add_contact(args, book: AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: add <name> <phone>")
+    
     name, phone = args
     record = book.find(name)
     message = f"{Fore.GREEN} Contact updated"
@@ -51,12 +72,12 @@ def add_contact(args, book: AddressBook):
 @input_error
 def delete_contact(args, book: AddressBook):
     if len(args) < 1:
-        return f"{Fore.RED}Usage: delete <name>"
+        raise InsufficientArgumentsError("Usage: delete <name>")
     
     name = args[0]
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     confirmation=input(f"{Fore.YELLOW}Are you sure? You are going to delete the entire contact '{name}'? (yes/no):")
     if confirmation.strip().lower()!="yes":
@@ -65,13 +86,13 @@ def delete_contact(args, book: AddressBook):
     if book.delete(name):
         return f"{Fore.GREEN}Contact {name} deleted successfully"
     else:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     
 @input_error
 def find(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: find <field> <string>"
+        raise InsufficientArgumentsError("Usage: find <field> <string>")
     
     field = args[0]
     string = args[1]
@@ -79,21 +100,21 @@ def find(args, book: AddressBook):
     records = book.find_by_any_arg(field, string)
 
     if len(records) == 0:
-        return f"{Fore.RED}Contacts with the field {field} that contain {string} not found."
-    else:
-        for r in records:
-            phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
-            birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
-            address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
-            email_str=r.email.value if r.email else "N/A"
-            lines.append(
-            f"{Fore.GREEN}Contact name: {r.name.value}\n"
-            f"Phones: {phones_str}\n"
-            f"Birthday: {birthday_str}\n"
-            f"Address: {address_str}\n"
-            f"Email: {email_str}\n"
-            "-----------------------"
-        )
+        raise ContactNotFoundError(f"Contacts with the field {field} that contain {string} not found.")
+    
+    for r in records:
+        phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
+        birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
+        address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
+        email_str=r.email.value if r.email else "N/A"
+        lines.append(
+        f"{Fore.GREEN}Contact name: {r.name.value}\n"
+        f"Phones: {phones_str}\n"
+        f"Birthday: {birthday_str}\n"
+        f"Address: {address_str}\n"
+        f"Email: {email_str}\n"
+        "-----------------------"
+    )
     return "\n".join(lines)
 
 @input_error
@@ -124,82 +145,96 @@ def get_all_contacts(book: AddressBook):
 # ****** Start Manipulations with phone ******
 @input_error
 def update_contact(args, book: AddressBook):
+    if len(args) < 3:
+        raise InsufficientArgumentsError("Usage: change-phone <name> <old_phone> <new_phone>")
+    
     name, old_phone, new_phone = args
     record = book.find(name)
-    if record:
-        record.edit_phone(old_phone, new_phone)
-        return f"{Fore.GREEN}Phone updated"
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    if not record.edit_phone(old_phone, new_phone):
+        raise PhoneNotFoundError(f"Phone number '{old_phone}' not found for contact '{name}'")
+    
+    return f"{Fore.GREEN}Phone updated"
 
 @input_error
 def get_contact(args, book: AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Usage: show-phone <name>")
+    
     name = args[0]
     record = book.find(name)
-    if record:
-        phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
-        lines = [
-            f"{Fore.GREEN}Contact name: {record.name.value}",
-            f"Phones: {phones_str}",
-            "-----------------------"
-        ]
-        return "\n".join(lines)
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
+    lines = [
+        f"{Fore.GREEN}Contact name: {record.name.value}",
+        f"Phones: {phones_str}",
+        "-----------------------"
+    ]
+    return "\n".join(lines)
 
 @input_error
 def delete_phone(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: delete-phone <name> <phone>"
+        raise InsufficientArgumentsError("Usage: delete-phone <name> <phone>")
 
     name = args[0]
     phone=args[1]
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     if len(record.phones) <=1:
-        return f"{Fore.RED}Contact must have at least one phone number."
+        raise MinimumPhoneRequiredError("Contact must have at least one phone number.")
     
-    if record.remove_phone(phone):
-        return f"{Fore.GREEN}Phone number {phone} of contact {name} deleted successfully"
-    else:
-        return f"{Fore.RED}Phone number '{phone}' not found"
+    if not record.remove_phone(phone):
+        raise PhoneNotFoundError(f"Phone number '{phone}' not found")
+    
+    return f"{Fore.GREEN}Phone number {phone} of contact {name} deleted successfully"
 # ****** End Manipulations with phone ******
 
 
 # ****** Start Manipulations with address ******
 @input_error
 def add_address(args, book:AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: add-address <name> <address>")
+    
     name = args[0]
     address = " ".join(args[1:])
     record = book.find(name)
-    if record:
-        record.add_address(address)
-        return f"{Fore.GREEN}Address added"
-    else:
-        raise KeyError  
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    record.add_address(address)
+    return f"{Fore.GREEN}Address added"
 
 @input_error
 def get_address(args, book: AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Usage: show-address <name>")
+    
     name = args[0]
     record = book.find(name)
-    if record:
-        address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
-        lines = [
-            f"{Fore.CYAN}Contact name: {record.name.value}",
-            f"Address: {address_str}",
-            "-----------------------"
-        ]
-        return "\n".join(lines)
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
+    lines = [
+        f"{Fore.CYAN}Contact name: {record.name.value}",
+        f"Address: {address_str}",
+        "-----------------------"
+    ]
+    return "\n".join(lines)
     
 
 @input_error
 def update_address(args, book: AddressBook):
     if len(args) < 3:
-        return f"{Fore.RED}Usage: update-address <name> <old_address> -> <new_address>"
+        raise InsufficientArgumentsError("Usage: change-address <name> <old_address> -> <new_address>")
     
     name=args[0]
     rest=" ".join(args[1:])
@@ -208,96 +243,110 @@ def update_address(args, book: AddressBook):
         old_addr = old_addr.strip().replace("\r", "")
         new_addr = new_addr.strip().replace("\r", "")
     except ValueError:
-        return f"{Fore.RED}Please separate old and new addresses with '->'"
+        raise ValueError("Please separate old and new addresses with '->'")
+    
     record = book.find(name)
-
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     if old_addr.lower() not in [a.value.lower() for a in record.addresses]:
-        return f"{Fore.RED}Contact {name} has no address {old_addr}!!!"
+        raise AddressNotFoundError(f"Contact {name} has no address {old_addr}")
     
-    if record.edit_address(old_addr, new_addr):
-        return f"{Fore.GREEN}Address of the contact {name} updated"
-    else:
-        f"{Fore.RED}Contact {name} has no address {old_addr}"
+    if not record.edit_address(old_addr, new_addr):
+        raise AddressNotFoundError(f"Contact {name} has no address {old_addr}")
+    
+    return f"{Fore.GREEN}Address of the contact {name} updated"
     
 
 @input_error
 def delete_address(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: delete-address <name> <address>"
+        raise InsufficientArgumentsError("Usage: delete-address <name> <address>")
     
     name = args[0]
     address=" ".join(args[1:])
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
-    if record.remove_address(address):
-        return f"{Fore.GREEN}Address {address} of contact {name} deleted successfully"
-    else:
-        return f"{Fore.RED}Address '{address}' not found"
+    if not record.remove_address(address):
+        raise AddressNotFoundError(f"Address '{address}' not found")
+    
+    return f"{Fore.GREEN}Address {address} of contact {name} deleted successfully"
 # ****** End Manipulations with address ******
 
 
 # ****** Start Manipulations with birthday ******
 @input_error
 def add_birthday(args, book:AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: add-birthday <name> <birthday>")
+    
     name, birthday = args
     record = book.find(name)
-    if record:
-        record.add_birthday(birthday)
-        return f"{Fore.GREEN}Birthday added"
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    record.add_birthday(birthday)
+    return f"{Fore.GREEN}Birthday added"
 
 @input_error
 def get_birthday(args, book:AddressBook):
-    name = args[0]
-    record = book.find(name)
-    if record:
-        birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
-        lines = [
-            f"{Fore.MAGENTA}Contact name: {record.name.value}",
-            f"Birthday: {birthday_str}",
-            "-----------------------"
-        ]
-        return "\n".join(lines)
-    else:
-       raise KeyError
-
-@input_error
-def update_birthday(args, book: AddressBook):
-    name, new_bday = args
-    record = book.find(name)
-    if record and record.edit_birthday(new_bday):
-            return f"{Fore.GREEN}Birthday is updated"
-    else:
-        raise KeyError
-
-@input_error
-def delete_birthday(args, book: AddressBook):
     if len(args) < 1:
-        return f"{Fore.RED}Usage: delete-birthday <name>"
+        raise InsufficientArgumentsError("Usage: show-birthday <name>")
     
     name = args[0]
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
-    if record.remove_birthday(name):
-        return f"{Fore.GREEN}Birthday of contact {name} deleted successfully"
-    else:
-        return f"{Fore.RED}Contact '{name}' has no birthday date"
+    birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
+    lines = [
+        f"{Fore.MAGENTA}Contact name: {record.name.value}",
+        f"Birthday: {birthday_str}",
+        "-----------------------"
+    ]
+    return "\n".join(lines)
+
+@input_error
+def update_birthday(args, book: AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: change-birthday <name> <birthday>")
+    
+    name, new_bday = args
+    record = book.find(name)
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    if not record.edit_birthday(new_bday):
+        raise BirthdayNotFoundError(f"Contact '{name}' has no birthday to update")
+    
+    return f"{Fore.GREEN}Birthday is updated"
+
+@input_error
+def delete_birthday(args, book: AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Usage: delete-birthday <name>")
+    
+    name = args[0]
+    record = book.find(name)
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    if not record.remove_birthday(name):
+        raise BirthdayNotFoundError(f"Contact '{name}' has no birthday date")
+    
+    return f"{Fore.GREEN}Birthday of contact {name} deleted successfully"
 
 @input_error
 def birthdays(book:AddressBook):
     if not book:
-        raise KeyError
+        raise ContactNotFoundError("Address book is empty")
+    
     birthdays_list = book.get_upcoming_birthdays()
     if not birthdays_list:
         return f"{Fore.YELLOW}No upcoming birthdays"
+    
     lines = []
     for b in birthdays_list:
         lines.append(
@@ -312,30 +361,27 @@ def birthdays(book:AddressBook):
 @input_error
 def add_note(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: add-note <name> <content>"
+        raise InsufficientArgumentsError("Usage: add-note <name> <content>")
 
     name = args[0]
     content = " ".join(args[1:])
 
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
-    try:
-        note = record.add_note(content)
-        return f"{Fore.GREEN}Note added successfully! ID: {note.id}"
-    except ValueError as e:
-        return f"{Fore.RED}{str(e)}"
+    note = record.add_note(content)
+    return f"{Fore.GREEN}Note added successfully! ID: {note.id}"
 
 @input_error
 def show_notes(args, book: AddressBook):
     if len(args) < 1:
-        return f"{Fore.RED}Usage: show-notes <name>"
+        raise InsufficientArgumentsError("Usage: show-notes <name>")
 
     name = args[0]
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
     notes = record.show_all_notes()
     if not notes:
@@ -350,14 +396,14 @@ def show_notes(args, book: AddressBook):
 @input_error
 def find_notes(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: find-notes <name> <search_text>"
+        raise InsufficientArgumentsError("Usage: find-notes <name> <search_text>")
 
     name = args[0]
     search_text = " ".join(args[1:])
 
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
     notes = record.find_notes(search_text)
     if not notes:
@@ -372,7 +418,7 @@ def find_notes(args, book: AddressBook):
 @input_error
 def edit_note(args, book: AddressBook):
     if len(args) < 3:
-        return f"{Fore.RED}Usage: edit-note <name> <note_id> <new_content>"
+        raise InsufficientArgumentsError("Usage: edit-note <name> <note_id> <new_content>")
 
     name = args[0]
     note_id = args[1]
@@ -380,79 +426,73 @@ def edit_note(args, book: AddressBook):
 
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
-    try:
-        if record.edit_note(note_id, new_content):
-            return f"{Fore.GREEN}Note {note_id} updated successfully"
-        else:
-            return f"{Fore.RED}Note with ID '{note_id}' not found"
-    except ValueError as e:
-        return f"{Fore.RED}{str(e)}"
+    if not record.edit_note(note_id, new_content):
+        raise NoteNotFoundError(f"Note with ID '{note_id}' not found")
+    
+    return f"{Fore.GREEN}Note {note_id} updated successfully"
 
 @input_error
 def delete_note(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: delete-note <name> <note_id>"
+        raise InsufficientArgumentsError("Usage: delete-note <name> <note_id>")
 
     name = args[0]
     note_id = args[1]
 
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
-    if record.delete_note(note_id):
-        return f"{Fore.GREEN}Note {note_id} deleted successfully"
-    else:
-        return f"{Fore.RED}Note with ID '{note_id}' not found"
+    if not record.delete_note(note_id):
+        raise NoteNotFoundError(f"Note with ID '{note_id}' not found")
+    
+    return f"{Fore.GREEN}Note {note_id} deleted successfully"
 
 @input_error
 def add_tag(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: add-tag <note_id> <tag>"
+        raise InsufficientArgumentsError("Usage: add-tag <note_id> <tag>")
     
     note_id = args[0]
     tag = args[1]
     
     record, note = book.find_note_by_id(note_id)
     if not note:
-        return f"{Fore.RED}Note with ID '{note_id}' not found"
+        raise NoteNotFoundError(f"Note with ID '{note_id}' not found")
     
-    try:
-        note.add_tag(tag)
-        return f"{Fore.GREEN}Tag '{tag}' added to note {note_id}"
-    except ValueError as e:
-        return f"{Fore.RED}{str(e)}"
+    note.add_tag(tag)
+    return f"{Fore.GREEN}Tag '{tag}' added to note {note_id}"
 
 @input_error
 def remove_tag(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: remove-tag <note_id> <tag>"
+        raise InsufficientArgumentsError("Usage: remove-tag <note_id> <tag>")
     
     note_id = args[0]
     tag = args[1]
     
     record, note = book.find_note_by_id(note_id)
     if not note:
-        return f"{Fore.RED}Note with ID '{note_id}' not found"
+        raise NoteNotFoundError(f"Note with ID '{note_id}' not found")
     
-    if note.remove_tag(tag):
-        return f"{Fore.GREEN}Tag '{tag}' removed from note {note_id}"
-    else:
-        return f"{Fore.RED}Tag '{tag}' not found in note {note_id}"
+    if not note.remove_tag(tag):
+        raise ValueError(f"Tag '{tag}' not found in note {note_id}")
+    
+    return f"{Fore.GREEN}Tag '{tag}' removed from note {note_id}"
 
 @input_error
 def find_by_tag(args, book: AddressBook):
     if len(args) < 2:
-        return f"{Fore.RED}Usage: find-by-tag <name> <tag>"
+        raise InsufficientArgumentsError("Usage: find-by-tag <name> <tag>")
     
     name = args[0]
     tag = args[1]
     
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     notes = record.find_notes_by_tag(tag)
     if not notes:
@@ -467,7 +507,7 @@ def find_by_tag(args, book: AddressBook):
 @input_error
 def find_all_by_tag(args, book: AddressBook):
     if len(args) < 1:
-        return f"{Fore.RED}Usage: find-all-by-tag <tag>"
+        raise InsufficientArgumentsError("Usage: find-all-by-tag <tag>")
     
     tag = args[0]
     results = book.find_all_notes_by_tag(tag)
@@ -486,12 +526,12 @@ def find_all_by_tag(args, book: AddressBook):
 @input_error
 def show_notes_sorted(args, book: AddressBook):
     if len(args) < 1:
-        return f"{Fore.RED}Usage: show-notes-sorted <name>"
+        raise InsufficientArgumentsError("Usage: show-notes-sorted <name>")
     
     name = args[0]
     record = book.find(name)
     if not record:
-        return f"{Fore.RED}Contact '{name}' not found"
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
     notes = record.show_all_notes()
     if not notes:
@@ -510,47 +550,59 @@ def show_notes_sorted(args, book: AddressBook):
 # ****** Start Manipulations with emails ******
 @input_error
 def add_email(args, book:AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: add-email <name> <email>")
+    
     name, email = args
     record = book.find(name)
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
 
-    if record:
-        record.add_email(email)
-        return f"{Fore.GREEN}Email is added"
-    else:
-        raise KeyError
+    record.add_email(email)
+    return f"{Fore.GREEN}Email is added"
 
 @input_error
 def update_email(args, book: AddressBook):
+    if len(args) < 2:
+        raise InsufficientArgumentsError("Usage: change-email <name> <email>")
+    
     name, new_email = args
     record = book.find(name)
-    if record:
-        record.edit_email(new_email)
-        return f"{Fore.GREEN}Email is updated"
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
     
+    record.edit_email(new_email)
+    return f"{Fore.GREEN}Email is updated"
+
+@input_error    
 def show_email(args, book:AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Usage: show-email <name>")
+    
     name = args[0]
     record = book.find(name)
-    if record:
-        lines = [
-            f"{Fore.MAGENTA}Contact name: {record.name.value}",
-            f"Email: {record.email.value if record.email else "N/A"}",
-            "-----------------------"
-        ]
-        return "\n".join(lines)
-    else:
-       raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    lines = [
+        f"{Fore.MAGENTA}Contact name: {record.name.value}",
+        f"Email: {record.email.value if record.email else 'N/A'}",
+        "-----------------------"
+    ]
+    return "\n".join(lines)
 
 @input_error
 def delete_email(args, book: AddressBook):
+    if len(args) < 1:
+        raise InsufficientArgumentsError("Usage: delete-email <name>")
+    
     name = args[0]
     record = book.find(name)
-    if record:
-        record.delete_email()
-        return f"{Fore.GREEN}Email is removed"
-    else:
-        raise KeyError
+    if not record:
+        raise ContactNotFoundError(f"Contact '{name}' not found")
+    
+    record.delete_email()
+    return f"{Fore.GREEN}Email is removed"
 # ****** End Manipulations with emails ******
 
 def help():

@@ -4,7 +4,6 @@ from .birthday import Birthday
 from .note import Note
 from .address import Address
 from .email import Email
-# from src.exeptions.email_already_exists import EmailAlreadyExistsError
 
 class EmailFieldError(Exception):
     pass
