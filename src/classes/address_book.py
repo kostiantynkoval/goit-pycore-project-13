@@ -46,7 +46,30 @@ class AddressBook(UserDict):
                      })
 
         return birthdays_list
-    
+
+    def get_birthdays_in_range(self, days: int):
+        current_day = datetime.today().date()
+        birthdays_list = []
+
+        for record in self.data.values():
+            if record.birthday:
+                birthday = record.birthday.value.date()
+
+                birthday_this_year = birthday.replace(year=current_day.year)
+
+                if birthday_this_year < current_day:
+                    birthday_this_year = birthday_this_year.replace(year=current_day.year + 1)
+
+                days_till_birthday = (birthday_this_year - current_day).days
+
+                if 0 <= days_till_birthday <= days:
+                    birthdays_list.append({
+                        "name": record.name.value,
+                        "birthday": birthday.strftime("%d.%m.%Y"),
+                    })
+
+        return birthdays_list
+
     def find_all_notes_by_tag(self, tag: str):
         results = []
         for record in self.data.values():

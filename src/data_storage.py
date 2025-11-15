@@ -1,5 +1,4 @@
 import pickle
-import pathlib
 
 from classes.address_book import AddressBook
 
