@@ -6,6 +6,7 @@ from .note_not_found import NoteNotFoundError
 from .insufficient_arguments import InsufficientArgumentsError
 from .minimum_phone_required import MinimumPhoneRequiredError
 from .email_already_exists import EmailAlreadyExistsError
+from .phone_already_exists import PhoneAlreadyExistsError
 
 __all__ = [
     'ContactNotFoundError',
@@ -16,5 +17,6 @@ __all__ = [
     'InsufficientArgumentsError',
     'MinimumPhoneRequiredError',
     'EmailAlreadyExistsError',
+    'PhoneAlreadyExistsError',
 ]
 

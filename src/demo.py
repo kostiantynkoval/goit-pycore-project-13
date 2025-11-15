@@ -22,13 +22,19 @@ add_note_func = capture_note_id_decorator(original_add_note)
 commands_template = [
     "hello",
     "add John 1234567890",
+    "add Sherlock 1111111111",
+    "add-birthday John 01-12-1995",
     "add-birthday John 01.12.1995",
     "add-address John 221B Baker Street, London",
+    "add-address Sherlock Hidden Headquarter, London",
+    "add-email John john.email",
     "add-email John john.watson@example.com",
     "add-note John Prepare medical report",
     "add-tag {last_note_id} medical",
     "find-by-tag John medical",
     "remove-tag {last_note_id} medical",
+    "add-tag {last_note_id} detective",
+    "add-note Sherlock Investigate case #4",
     "add-tag {last_note_id} detective",
     "find-all-by-tag detective",
     "show-phone John",
@@ -37,7 +43,9 @@ commands_template = [
     "show-address John",
     "change-address John 221B Baker Street, London -> New London Address",
     "show-address John",
+    "find address London",
     "show-birthday John",
+    "show-email Sherlock",
     "show-email John",
     "change-email John john.newmail@example.com",
     "show-email John",
@@ -47,20 +55,26 @@ commands_template = [
     "add-note John Meet Sherlock at 8",
     "show-notes John",
     "show-notes-sorted John",
+    "add John 9876543210",
     "add John 3234567999",
     "all",
     "edit-note John {last_note_id} Meet Sherlock at 7",
     "find-notes John Sherlock",
+    "delete-birthday Sherlock",
     "delete-birthday John",
     "find name John",
+    "delete-address John Miami",
     "delete-address John New London Address",
     "find name John",
     "delete-email John",
     "find name John",
     "delete-note John {last_note_id}",
     "find name John",
+    "delete-phone Sherlock 1111111111",
     "delete-phone John 9876543210",
     "find name John",
+    "delete Sherlock",
+    "yes",
     "help",
     "close"
 ]
@@ -71,7 +85,7 @@ def mock_input(prompt):
         if "{last_note_id}" in cmd and note_ids:
             cmd = cmd.replace("{last_note_id}", note_ids[-1])
         print(f"{Fore.LIGHTWHITE_EX}{prompt}{cmd}{Style.RESET_ALL}")
-        time.sleep(2)
+        time.sleep(0.2)
         return cmd
     return "close"
 
