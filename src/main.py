@@ -10,6 +10,7 @@ from exceptions import (
     NoteNotFoundError,
     InsufficientArgumentsError,
     MinimumPhoneRequiredError,
+    PhoneAlreadyExistsError,
 )
 
 init(autoreset=True)
@@ -32,6 +33,8 @@ def input_error(func):
             return f"{Fore.RED}{str(e) if str(e) else 'Contact not found'}"
         except PhoneNotFoundError as e:
             return f"{Fore.RED}{str(e) if str(e) else 'Phone number not found'}"
+        except PhoneAlreadyExistsError as e:
+            return f"{Fore.YELLOW}{str(e) if str(e) else 'This phone number already exists.'}"
         except AddressNotFoundError as e:
             return f"{Fore.RED}{str(e) if str(e) else 'Address not found'}"
         except BirthdayNotFoundError as e:
@@ -65,7 +68,7 @@ def add_contact(args, book: AddressBook):
         message = f"{Fore.GREEN}Contact added"
     if phone:
         if any(phone == p.value for p in record.phones):
-            return f"{Fore.YELLOW}This phone number already exists."
+            raise PhoneAlreadyExistsError("This phone number already exists.")
         record.add_phone(phone)
         message = f"{Fore.GREEN}Contact updated"
     return message
