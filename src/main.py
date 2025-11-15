@@ -643,6 +643,7 @@ def help():
         f"{Fore.YELLOW}change-email <name> <email> {Fore.RESET}- Change email of contact\n"
         f"{Fore.YELLOW}show-phone <name> {Fore.RESET}- Show phones of contact\n"
         f"{Fore.YELLOW}show-birthday <name> {Fore.RESET}- Show birthday of contact\n"
+        f"{Fore.YELLOW}show-birthdays-in <days> {Fore.RESET}- Show birthdays in the next <days> days\n"
         f"{Fore.YELLOW}show-address <name> {Fore.RESET}- Show address of contact\n"
         f"{Fore.YELLOW}show-email <name> {Fore.RESET}- Show email of contact\n"
         f"{Fore.YELLOW}show-notes <name> {Fore.RESET}- Show notes of contact\n"
