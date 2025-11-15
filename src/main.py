@@ -59,13 +59,15 @@ def add_contact(args, book: AddressBook):
     
     name, phone = args
     record = book.find(name)
-    message = f"{Fore.GREEN}Contact updated"
     if record is None:
         record = Record(name)
         book.add_record(record)
         message = f"{Fore.GREEN}Contact added"
     if phone:
+        if any(phone == p.value for p in record.phones):
+            return f"{Fore.YELLOW}This phone number already exists."
         record.add_phone(phone)
+        message = f"{Fore.GREEN}Contact updated"
     return message
 
 
@@ -103,18 +105,7 @@ def find(args, book: AddressBook):
         raise ContactNotFoundError(f"Contacts with the field {field} that contain {string} not found.")
     
     for r in records:
-        phones_str = "; ".join(p.value for p in r.phones) if r.phones else "N/A"
-        birthday_str = r.birthday.value.strftime("%d.%m.%Y") if r.birthday else "N/A"
-        address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
-        email_str=r.email.value if r.email else "N/A"
-        lines.append(
-        f"{Fore.MAGENTA}Contact name: {r.name.value}\n"
-        f"Phones: {phones_str}\n"
-        f"Birthday: {birthday_str}\n"
-        f"Address: {address_str}\n"
-        f"Email: {email_str}\n"
-        "-----------------------"
-    )
+        lines.append(str(r))
     return "\n".join(lines)
 
 @input_error
@@ -635,6 +626,7 @@ def help():
         f"{Fore.YELLOW}add-address <name> <address> {Fore.RESET}- Add address for a contact\n"
         f"{Fore.YELLOW}add-email <name> <email> {Fore.RESET}- Add email for a contact\n"
         f"{Fore.YELLOW}add-note <name> <note> {Fore.RESET}- Add note for a contact\n"
+        f"{Fore.YELLOW}add-tag <name> <note_ID> <tag> {Fore.RESET}- Add tag for a note of a contact\n"
         f"{Fore.YELLOW}all {Fore.RESET}- Shows all contacts in the book\n"
         f"{Fore.YELLOW}change-phone <name> <old_phone> <new_phone> {Fore.RESET}- Change a phone number of contact\n"
         f"{Fore.YELLOW}change-birthday <name> <birthday> {Fore.RESET}- Change birthday of contact\n"
@@ -645,14 +637,19 @@ def help():
         f"{Fore.YELLOW}show-address <name> {Fore.RESET}- Show address of contact\n"
         f"{Fore.YELLOW}show-email <name> {Fore.RESET}- Show email of contact\n"
         f"{Fore.YELLOW}show-notes <name> {Fore.RESET}- Show notes of contact\n"
+        f"{Fore.YELLOW}show-notes-sorted <name> {Fore.RESET}- Show notes sorted by tags\n"
         f"{Fore.YELLOW}show-celebration-day {Fore.RESET}- Show contacts with birthdays for the next week\n"
+        f"{Fore.YELLOW}show-birthdays-in <days> {Fore.RESET}- Show contacts with birthdays for the next amount of days\n"
         f"{Fore.YELLOW}find-notes <name> <search_text> {Fore.RESET}- Show note with specific text of contact\n"
         f"{Fore.YELLOW}find <field> <string> {Fore.RESET}- Search contacts by specific fields\n"
+        f"{Fore.YELLOW}find-by-tag <name> <tag> {Fore.RESET}- Find notes of a contact by tag\n"
+        f"{Fore.YELLOW}find-all-by-tag <tag> {Fore.RESET}- Find notes of all contacts by tag\n"
         f"{Fore.YELLOW}delete-phone <name> <phone> {Fore.RESET}- Delete phone number of contact\n"
         f"{Fore.YELLOW}delete-birthday <name> {Fore.RESET}- Delete birthday of contact\n"
         f"{Fore.YELLOW}delete-address <name> <address> {Fore.RESET}- Delete address of contact\n"
         f"{Fore.YELLOW}delete-note <name> <note_ID> {Fore.RESET}- Delete note with specific ID of contact\n"
         f"{Fore.YELLOW}delete-email <name> {Fore.RESET}- Delete email of contact\n"
+        f"{Fore.YELLOW}remove-tag <name> <note_ID> <tag> {Fore.RESET}- Remove tag from a note\n"
     )
 
 def main():
@@ -733,7 +730,7 @@ def main():
         elif command == "help":
             print(help())
         else:
-            print(f"{Fore.RED}Invalid command")
+            print(f"{Fore.RED}Invalid command. Type 'help' to see available commands.")
 
 
 if __name__ == "__main__":
