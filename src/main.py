@@ -59,7 +59,7 @@ def add_contact(args, book: AddressBook):
     
     name, phone = args
     record = book.find(name)
-    message = f"{Fore.GREEN} Contact updated"
+    message = f"{Fore.GREEN}Contact updated"
     if record is None:
         record = Record(name)
         book.add_record(record)
@@ -108,7 +108,7 @@ def find(args, book: AddressBook):
         address_str = "; ".join(a.value for a in r.addresses) if r.addresses else "N/A"
         email_str=r.email.value if r.email else "N/A"
         lines.append(
-        f"{Fore.GREEN}Contact name: {r.name.value}\n"
+        f"{Fore.MAGENTA}Contact name: {r.name.value}\n"
         f"Phones: {phones_str}\n"
         f"Birthday: {birthday_str}\n"
         f"Address: {address_str}\n"
@@ -126,11 +126,11 @@ def get_all_contacts(book: AddressBook):
         phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
         birthday_str = record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
         address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
-        email_str = f"{record.email.value}\n" if record.email else "N/A"
-        notes_count = f"{len(record.notes)}\n" if record.notes else "N/A"
+        email_str = f"{record.email.value}" if record.email else "N/A"
+        notes_count = f"{len(record.notes)}" if record.notes else "N/A"
 
         lines.append(
-            f"{Fore.GREEN}Contact name: {record.name.value}\n"
+            f"{Fore.MAGENTA}Contact name: {record.name.value}\n"
             f"Phones: {phones_str}\n"
             f"Birthday: {birthday_str}\n"
             f"Address: {address_str}\n"
@@ -170,7 +170,7 @@ def get_contact(args, book: AddressBook):
     
     phones_str = "; ".join(p.value for p in record.phones) if record.phones else "N/A"
     lines = [
-        f"{Fore.GREEN}Contact name: {record.name.value}",
+        f"{Fore.MAGENTA}Contact name: {record.name.value}",
         f"Phones: {phones_str}",
         "-----------------------"
     ]
@@ -224,7 +224,7 @@ def get_address(args, book: AddressBook):
     
     address_str = "; ".join(a.value for a in record.addresses) if record.addresses else "N/A"
     lines = [
-        f"{Fore.CYAN}Contact name: {record.name.value}",
+        f"{Fore.MAGENTA}Contact name: {record.name.value}",
         f"Address: {address_str}",
         "-----------------------"
     ]
@@ -408,9 +408,9 @@ def show_notes(args, book: AddressBook):
     if not notes:
         return f"{Fore.YELLOW}No notes for {name}"
 
-    result = [f"{Fore.CYAN}Notes for {name}:"]
+    result = [f"{Fore.WHITE}Notes for {name}:"]
     for idx, note in enumerate(notes, 1):
-        result.append(f"{Fore.GREEN}[{idx}] {note}")
+        result.append(f"{Fore.CYAN}[{idx}] {note}")
 
     return "\n".join(result)
 
@@ -430,9 +430,9 @@ def find_notes(args, book: AddressBook):
     if not notes:
         return f"{Fore.YELLOW}No notes found for '{search_text}'"
 
-    result = [f"{Fore.CYAN}Found {len(notes)} note(s) for '{search_text}':"]
+    result = [f"{Fore.WHITE}Found {len(notes)} note(s) for '{search_text}':"]
     for idx, note in enumerate(notes, 1):
-        result.append(f"{Fore.GREEN}[{idx}] {note}")
+        result.append(f"{Fore.CYAN}[{idx}] {note}")
 
     return "\n".join(result)
 
@@ -519,9 +519,9 @@ def find_by_tag(args, book: AddressBook):
     if not notes:
         return f"{Fore.YELLOW}No notes found with tag '{tag}'"
     
-    result = [f"{Fore.CYAN}Notes for {name} with tag '#{tag}':"]
+    result = [f"{Fore.WHITE}Notes for {name} with tag '#{tag}':"]
     for idx, note in enumerate(notes, 1):
-        result.append(f"{Fore.GREEN}[{idx}] {note}")
+        result.append(f"{Fore.BLUE}[{idx}] {note}")
     
     return "\n".join(result)
 
@@ -536,11 +536,11 @@ def find_all_by_tag(args, book: AddressBook):
     if not results:
         return f"{Fore.YELLOW}No notes found with tag '{tag}'"
     
-    output = [f"{Fore.CYAN}All notes with tag '#{tag}':"]
+    output = [f"{Fore.WHITE}All notes with tag '#{tag}':"]
     for result in results:
-        output.append(f"\n{Fore.MAGENTA}Contact: {result['contact']}")
+        output.append(f"{Fore.WHITE}Contact: {result['contact']}")
         for idx, note in enumerate(result['notes'], 1):
-            output.append(f"{Fore.GREEN}[{idx}] {note}")
+            output.append(f"{Fore.BLUE}[{idx}] {note}")
     
     return "\n".join(output)
 
@@ -560,9 +560,9 @@ def show_notes_sorted(args, book: AddressBook):
     
     sorted_notes = sorted(notes, key=lambda n: len(n.tags), reverse=True)
     
-    result = [f"{Fore.CYAN}Notes for {name} (sorted by tags count):"]
+    result = [f"{Fore.WHITE}Notes for {name} (sorted by tags count):"]
     for idx, note in enumerate(sorted_notes, 1):
-        result.append(f"{Fore.GREEN}[{idx}] {note}")
+        result.append(f"{Fore.CYAN}[{idx}] {note}")
     
     return "\n".join(result)
 
@@ -628,7 +628,7 @@ def delete_email(args, book: AddressBook):
 
 def help():
     return (
-        f"{Fore.CYAN}Available Commands:\n"
+        f"{Fore.YELLOW}Available Commands:\n"
         f"{Fore.YELLOW}add <name> <phone> {Fore.RESET}- Add a new contact\n"
         f"{Fore.YELLOW}delete <name> {Fore.RESET}- Delete contact from the book\n"
         f"{Fore.YELLOW}add-birthday <name> <birthday> {Fore.RESET}- Add birthday for a contact\n"
@@ -657,13 +657,13 @@ def help():
 
 def main():
     book = load_data()
-    print(f"{Fore.BLUE}Welcome to the assistant bot!")
+    print(f"{Fore.LIGHTBLUE_EX}Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
         command, *args = parse_input(user_input)
 
         if command in ["close", "exit"]:
-            print(f"{Fore.BLUE}Good bye!")
+            print(f"{Fore.LIGHTBLUE_EX}Good bye!")
             save_data(book)
             break
         elif command == "hello":
