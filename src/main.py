@@ -2,6 +2,7 @@ from colorama import Fore, init
 from data_storage import save_data, load_data
 from classes.address_book import AddressBook
 from classes.record import Record, EmailFieldError
+from command_suggester import CommandSuggester
 from exceptions import (
     ContactNotFoundError,
     PhoneNotFoundError,
@@ -655,85 +656,114 @@ def help():
         f"{Fore.YELLOW}delete-email <name> {Fore.RESET}- Delete email of contact\n"
     )
 
+def execute_command(command, args, book):
+    if command in ["close", "exit"]:
+        return "EXIT"
+    elif command == "hello":
+        return f"{Fore.BLUE}How can I help you?"
+    elif command == "add":
+        return add_contact(args, book)
+    elif command == "delete":
+        return delete_contact(args, book)
+    elif command == "add-birthday":
+        return add_birthday(args, book)
+    elif command == "add-address":
+        return add_address(args, book)
+    elif command == "change-phone":
+        return update_contact(args, book)
+    elif command == "all":
+        return get_all_contacts(book)
+    elif command == "show-phone":
+        return get_contact(args, book)
+    elif command == "delete-phone":
+        return delete_phone(args, book)
+    elif command == "show-birthday":
+        return get_birthday(args, book)
+    elif command == "change-birthday":
+        return update_birthday(args, book)
+    elif command == "delete-birthday":
+        return delete_birthday(args, book)
+    elif command == "show-address":
+        return get_address(args, book)
+    elif command == "change-address":
+        return update_address(args, book)
+    elif command == "delete-address":
+        return delete_address(args, book)
+    elif command == "birthdays":
+        return birthdays(book)
+    elif command == "show-birthdays-in":
+        return birthdays_in_range(args, book)
+    elif command == "show-celebration-day":
+        return birthdays(book)
+    elif command == "add-note":
+        return add_note(args, book)
+    elif command == "show-notes":
+        return show_notes(args, book)
+    elif command == "find-notes":
+        return find_notes(args, book)
+    elif command == "edit-note":
+        return edit_note(args, book)
+    elif command == "delete-note":
+        return delete_note(args, book)
+    elif command == "add-tag":
+        return add_tag(args, book)
+    elif command == "remove-tag":
+        return remove_tag(args, book)
+    elif command == "find-by-tag":
+        return find_by_tag(args, book)
+    elif command == "find-all-by-tag":
+        return find_all_by_tag(args, book)
+    elif command == "show-notes-sorted":
+        return show_notes_sorted(args, book)
+    elif command == "find":
+        return find(args, book)
+    elif command == "add-email":
+        return add_email(args, book)
+    elif command == "change-email":
+        return update_email(args, book)
+    elif command == "show-email":
+        return show_email(args, book)
+    elif command == "delete-email":
+        return delete_email(args, book)
+    elif command == "help":
+        return help()
+    else:
+        return None
+
+
 def main():
     book = load_data()
-    print(f"{Fore.LIGHTBLUE_EX}Welcome to the assistant bot!")
+    suggester = CommandSuggester()
+    
+    print(f"{Fore.BLUE}Welcome to the assistant bot!")
+    
     while True:
-        user_input = input("Enter a command: ")
+        user_input = input("Enter a command: ").strip()
+        
+        if not user_input:
+            continue
+        
         command, *args = parse_input(user_input)
-
-        if command in ["close", "exit"]:
-            print(f"{Fore.LIGHTBLUE_EX}Good bye!")
+        
+        # Try to execute the command
+        result = execute_command(command, args, book)
+        
+        if result == "EXIT":
+            print(f"{Fore.BLUE}Good bye!")
             save_data(book)
             break
-        elif command == "hello":
-            print(f"{Fore.BLUE}How can I help you?")
-        elif command == "add":
-            print(add_contact(args, book))
-        elif command == "add-birthday":
-            print(add_birthday(args, book))
-        elif command == "add-address":
-            print(add_address(args, book))
-        elif command == "add-email":
-            print(add_email(args, book))
-        elif command == "add-note":
-            print(add_note(args, book))
-        elif command == "add-tag":
-            print(add_tag(args, book))
-        elif command == "change-phone":
-            print(update_contact(args, book))
-        elif command == "change-birthday":
-            print(update_birthday(args, book))
-        elif command == "change-address":
-            print(update_address(args, book))
-        elif command == "change-email":
-            print(update_email(args, book))
-        elif command == "delete":
-            print(delete_contact(args, book))
-        elif command == "delete-phone":
-            print(delete_phone(args, book))
-        elif command == "delete-birthday":
-            print(delete_birthday(args, book))
-        elif command == "delete-address":
-            print(delete_address(args, book))
-        elif command == "delete-email":
-            print(delete_email(args, book))
-        elif command == "delete-note":
-            print(delete_note(args, book))
-        elif command == "all":
-            print(get_all_contacts(book))
-        elif command == "show-phone":
-            print(get_contact(args, book))
-        elif command == "show-birthday":
-            print(get_birthday(args, book))
-        elif command == "show-birthdays-in":
-            print(birthdays_in_range(args, book))
-        elif command == "show-celebration-day":
-            print(birthdays(book))
-        elif command == "show-address":
-            print(get_address(args, book))
-        elif command == "show-notes":
-            print(show_notes(args, book))
-        elif command == "show-notes-sorted":
-            print(show_notes_sorted(args, book))
-        elif command == "show-email":
-            print(show_email(args, book))
-        elif command == "edit-note":
-            print(edit_note(args, book))
-        elif command == "remove-tag":
-            print(remove_tag(args, book))
-        elif command == "find":
-            print(find(args, book))
-        elif command == "find-by-tag":
-            print(find_by_tag(args, book))
-        elif command == "find-all-by-tag":
-            print(find_all_by_tag(args, book))
-        elif command == "find-notes":
-            print(find_notes(args, book))
-        elif command == "help":
-            print(help())
+        elif result is not None:
+            # Command executed successfully
+            print(result)
         else:
-            print(f"{Fore.RED}Invalid command")
+            # Command not recognized, so try to suggest the closest command
+            suggestion = suggester.suggest_command(command)
+            
+            if suggestion:
+                print(f"{Fore.YELLOW}Command '{command}' not found. Maybe you meant '{Fore.CYAN}{suggestion}{Fore.YELLOW}'?")
+            # If no suggestion is found, print an error message
+            else:
+                print(f"{Fore.RED}Invalid command. Type 'help' to see available commands.")
 
 
 if __name__ == "__main__":
