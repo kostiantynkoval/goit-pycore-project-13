@@ -1,10 +1,10 @@
-from .phone import Phone
-from .name import Name
-from .birthday import Birthday
-from .note import Note
-from .address import Address
-from .email import Email
-from colorama import Fore, init
+from classes.phone import Phone
+from classes.name import Name
+from classes.birthday import Birthday
+from classes.note import Note
+from classes.address import Address
+from classes.email import Email
+from colorama import Fore
 
 class EmailFieldError(Exception):
     pass

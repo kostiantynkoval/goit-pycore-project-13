@@ -1,4 +1,4 @@
-from .field import Field
+from classes.field import Field
 
 class Phone(Field):
     def __init__(self, value):

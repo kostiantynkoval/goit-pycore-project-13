@@ -1,5 +1,5 @@
 from datetime import datetime
-from .field import Field
+from classes.field import Field
 
 class Birthday(Field):
     def __init__(self, value):
