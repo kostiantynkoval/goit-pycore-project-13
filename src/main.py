@@ -657,79 +657,51 @@ def help():
         f"{Fore.YELLOW}remove-tag <name> <note_ID> <tag> {Fore.RESET}- Remove tag from a note\n"
     )
 
+# Command mapping dictionary
+COMMANDS = {
+    "close": lambda args, book: "EXIT",
+    "exit": lambda args, book: "EXIT",
+    "hello": lambda args, book: f"{Fore.BLUE}How can I help you?",
+    "help": lambda args, book: help(),
+    "add": add_contact,
+    "delete": delete_contact,
+    "add-birthday": add_birthday,
+    "add-address": add_address,
+    "change-phone": update_contact,
+    "all": lambda args, book: get_all_contacts(book),
+    "show-phone": get_contact,
+    "delete-phone": delete_phone,
+    "show-birthday": get_birthday,
+    "change-birthday": update_birthday,
+    "delete-birthday": delete_birthday,
+    "show-address": get_address,
+    "change-address": update_address,
+    "delete-address": delete_address,
+    "birthdays": lambda args, book: birthdays(book),
+    "show-birthdays-in": birthdays_in_range,
+    "show-celebration-day": lambda args, book: birthdays(book),
+    "add-note": add_note,
+    "show-notes": show_notes,
+    "find-notes": find_notes,
+    "edit-note": edit_note,
+    "delete-note": delete_note,
+    "add-tag": add_tag,
+    "remove-tag": remove_tag,
+    "find-by-tag": find_by_tag,
+    "find-all-by-tag": find_all_by_tag,
+    "show-notes-sorted": show_notes_sorted,
+    "find": find,
+    "add-email": add_email,
+    "change-email": update_email,
+    "show-email": show_email,
+    "delete-email": delete_email,
+}
+
 def execute_command(command, args, book):
-    if command in ["close", "exit"]:
-        return "EXIT"
-    elif command == "hello":
-        return f"{Fore.BLUE}How can I help you?"
-    elif command == "add":
-        return add_contact(args, book)
-    elif command == "delete":
-        return delete_contact(args, book)
-    elif command == "add-birthday":
-        return add_birthday(args, book)
-    elif command == "add-address":
-        return add_address(args, book)
-    elif command == "change-phone":
-        return update_contact(args, book)
-    elif command == "all":
-        return get_all_contacts(book)
-    elif command == "show-phone":
-        return get_contact(args, book)
-    elif command == "delete-phone":
-        return delete_phone(args, book)
-    elif command == "show-birthday":
-        return get_birthday(args, book)
-    elif command == "change-birthday":
-        return update_birthday(args, book)
-    elif command == "delete-birthday":
-        return delete_birthday(args, book)
-    elif command == "show-address":
-        return get_address(args, book)
-    elif command == "change-address":
-        return update_address(args, book)
-    elif command == "delete-address":
-        return delete_address(args, book)
-    elif command == "birthdays":
-        return birthdays(book)
-    elif command == "show-birthdays-in":
-        return birthdays_in_range(args, book)
-    elif command == "show-celebration-day":
-        return birthdays(book)
-    elif command == "add-note":
-        return add_note(args, book)
-    elif command == "show-notes":
-        return show_notes(args, book)
-    elif command == "find-notes":
-        return find_notes(args, book)
-    elif command == "edit-note":
-        return edit_note(args, book)
-    elif command == "delete-note":
-        return delete_note(args, book)
-    elif command == "add-tag":
-        return add_tag(args, book)
-    elif command == "remove-tag":
-        return remove_tag(args, book)
-    elif command == "find-by-tag":
-        return find_by_tag(args, book)
-    elif command == "find-all-by-tag":
-        return find_all_by_tag(args, book)
-    elif command == "show-notes-sorted":
-        return show_notes_sorted(args, book)
-    elif command == "find":
-        return find(args, book)
-    elif command == "add-email":
-        return add_email(args, book)
-    elif command == "change-email":
-        return update_email(args, book)
-    elif command == "show-email":
-        return show_email(args, book)
-    elif command == "delete-email":
-        return delete_email(args, book)
-    elif command == "help":
-        return help()
-    else:
-        return None
+    handler = COMMANDS.get(command)
+    if handler:
+        return handler(args, book)
+    return None
 
 
 def main():
