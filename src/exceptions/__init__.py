@@ -1,12 +1,12 @@
-from .contact_not_found import ContactNotFoundError
-from .phone_not_found import PhoneNotFoundError
-from .address_not_found import AddressNotFoundError
-from .birthday_not_found import BirthdayNotFoundError
-from .note_not_found import NoteNotFoundError
-from .insufficient_arguments import InsufficientArgumentsError
-from .minimum_phone_required import MinimumPhoneRequiredError
-from .email_already_exists import EmailAlreadyExistsError
-from .phone_already_exists import PhoneAlreadyExistsError
+from exceptions.contact_not_found import ContactNotFoundError
+from exceptions.phone_not_found import PhoneNotFoundError
+from exceptions.address_not_found import AddressNotFoundError
+from exceptions.birthday_not_found import BirthdayNotFoundError
+from exceptions.note_not_found import NoteNotFoundError
+from exceptions.insufficient_arguments import InsufficientArgumentsError
+from exceptions.minimum_phone_required import MinimumPhoneRequiredError
+from exceptions.email_already_exists import EmailAlreadyExistsError
+from exceptions.phone_already_exists import PhoneAlreadyExistsError
 
 __all__ = [
     'ContactNotFoundError',

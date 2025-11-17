@@ -1,5 +1,5 @@
 import re
-from .field import Field
+from classes.field import Field
 
 EMAIL_REGEXP = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
 

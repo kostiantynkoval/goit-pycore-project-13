@@ -1,5 +1,5 @@
-from ..classes.address_book import AddressBook
-from ..classes.record import Record
+from classes.address_book import AddressBook
+from classes.record import Record
 
 if __name__ == "__main__":
     # Створення книги
